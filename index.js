@@ -367,7 +367,7 @@ var routing;
             if (options.debugRoutes) {
                 console.log("  + " + route);
             }
-            var router = express.Router();
+            var router = express.Router({ mergeParams: true });
             var controllerInstance = undefined;
             if (options.transientControllers) {
                 setRoutesTransient(controllerClass, router, dependencyManager, options.debugRoutes || false);

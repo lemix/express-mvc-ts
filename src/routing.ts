@@ -138,7 +138,7 @@ namespace routing {
             if (options.debugRoutes) {
                 console.log(`  + ${route}`);
             }
-            let router = express.Router();
+            let router = express.Router({ mergeParams: true });
             let controllerInstance: IController | undefined = undefined;
             if (options.transientControllers) {
                 setRoutesTransient(controllerClass, router, dependencyManager, options.debugRoutes || false);
