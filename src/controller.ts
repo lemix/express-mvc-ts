@@ -45,6 +45,10 @@ export class Controller implements IController {
     protected file(data: any): Promise<FileContentResult> {
         return Promise.resolve<FileContentResult>({ type: 'file', data });
     }
+
+    protected next(err?: Error): Promise<NextResult> {
+        return Promise.resolve({ type: 'next', err: err });
+    }
 }
 
 
@@ -74,10 +78,18 @@ export interface FileContentResult {
     data: string;
 }
 
-export type RouteResult = ViewResult | JsonResult | RedirectResult | ContentResult | FileContentResult;
+export interface NextResult {
+    type: "next";
+    err: Error;
+}
 
-export function handleResult(res: express.Response, result: RouteResult) {
+export type RouteResult = ViewResult | JsonResult | RedirectResult | ContentResult | FileContentResult | NextResult;
+
+export function handleResult(res: express.Response, next: (err?: Error) => void, result: RouteResult) {
     switch (result.type) {
+        case 'next':
+            next(result.err);
+            break;
         case 'json':
             res.json(result.data);
             break;

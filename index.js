@@ -212,10 +212,16 @@ var Controller = (function () {
     Controller.prototype.file = function (data) {
         return Promise.resolve({ type: 'file', data: data });
     };
+    Controller.prototype.next = function (err) {
+        return Promise.resolve({ type: 'next', err: err });
+    };
     return Controller;
 }());
-function handleResult(res, result) {
+function handleResult(res, next, result) {
     switch (result.type) {
+        case 'next':
+            next(result.err);
+            break;
         case 'json':
             res.json(result.data);
             break;
@@ -325,10 +331,10 @@ var routing;
             if (debug) {
                 console.log("  |- " + route.method + " /" + route.route);
             }
-            method.call(router, '/' + route.route, function (req, res) {
+            method.call(router, '/' + route.route, function (req, res, next) {
                 var resultPromise = paramFunc ? route.handler.apply(controller, paramFunc(req, res, dm$$1)) : route.handler.call(controller);
                 if (resultPromise && typeof resultPromise.then === 'function') {
-                    resultPromise.then(function (result) { return handleResult(res, result); });
+                    resultPromise.then(function (result) { return handleResult(res, next, result); });
                 }
             });
         });
@@ -341,11 +347,11 @@ var routing;
         }
         routes.forEach(function (route) {
             var method = router[route.method];
-            method.call(router, '/' + route.route, function (req, res) {
+            method.call(router, '/' + route.route, function (req, res, next) {
                 var controller = dm$$1.getInstance(controllerClass);
                 var resultPromise = route.handler.call(controller);
                 if (resultPromise && typeof resultPromise.then === 'function') {
-                    resultPromise.then(function (result) { return handleResult(res, result); });
+                    resultPromise.then(function (result) { return handleResult(res, next, result); });
                 }
             });
         });
@@ -382,34 +388,6 @@ var routing;
         return mvcApp;
     }
     routing.setup = setup;
-    function setupLazy(app, options) {
-        if (options === void 0) { options = {}; }
-        var controllerDir = options.controllerDir || path.join(process.cwd(), 'controllers');
-        var dependencyManager = options.dependencyManager || dm;
-        var mvcApp = new MvcApp();
-        mvcApp.rootRouter = options.singleRouterToApp ? express.Router() : app;
-        app.use(function (req, res, next) {
-            var name = req.url.split(/\//, 2)[1] || 'index';
-            var files = fs.readdirSync(controllerDir);
-            var re = new RegExp(name + 'Controller\.js$', 'i');
-            var file = files.filter(function (file) { return re.test(file); })[0];
-            var module = require(path.join(controllerDir, file));
-            var controllerClass = module[file.replace(/.js/, '')];
-            var route = Reflect.getMetadata(exports.MetadataSymbols.ControllerRoutePrefixSymbol, controllerClass) || getControllerName(controllerClass);
-            if (options.debugRoutes) {
-                console.log("  + " + route);
-            }
-            var router = express.Router();
-            if (options.transientControllers) {
-                setRoutesTransient(controllerClass, router, dependencyManager, options.debugRoutes || false);
-            }
-            else {
-                setRoutesSingleton(controllerClass, router, dependencyManager, options.debugRoutes || false);
-            }
-            app.use('/' + route, router);
-        });
-        return mvcApp;
-    }
 })(routing || (routing = {}));
 function setup(app, options) {
     if (options === void 0) { options = {}; }

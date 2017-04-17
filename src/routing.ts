@@ -94,10 +94,10 @@ namespace routing {
             if (debug) {
                 console.log(`  |- ${route.method} /${route.route}`);
             }
-            method.call(router, '/' + route.route, (req: express.Request, res: express.Response) => {
+            method.call(router, '/' + route.route, (req: express.Request, res: express.Response, next: (err?: Error) => void) => {
                 var resultPromise = paramFunc ? route.handler.apply(controller, paramFunc(req, res, dm)) : route.handler.call(controller);
                 if (resultPromise && typeof resultPromise.then === 'function') {
-                    resultPromise.then((result: any) => handleResult(res, result));
+                    resultPromise.then((result: any) => handleResult(res, next, result));
                 }
             });
         });
@@ -111,11 +111,11 @@ namespace routing {
         }
         routes.forEach(route => {
             let method: Function = (router as any)[route.method];
-            method.call(router, '/' + route.route, (req: express.Request, res: express.Response) => {
+            method.call(router, '/' + route.route, (req: express.Request, res: express.Response, next: (err: Error) => void) => {
                 let controller = dm.getInstance(controllerClass);
                 var resultPromise = route.handler.call(controller);
                 if (resultPromise && typeof resultPromise.then === 'function') {
-                    resultPromise.then((result: any) => handleResult(res, result));
+                    resultPromise.then((result: any) => handleResult(res, next, result));
                 }
             });
         });
@@ -151,35 +151,6 @@ namespace routing {
 
         return mvcApp;
     }
-    //not developed yet
-    function setupLazy(app: express.Express, options: SetupOptions = {}): MvcApp {
-        let controllerDir = options.controllerDir || path.join(process.cwd(), 'controllers');
-        let dependencyManager = options.dependencyManager || dm;
-        let mvcApp = new MvcApp();
-        mvcApp.rootRouter = options.singleRouterToApp ? express.Router() : app;
-        app.use(function (req, res, next) {
-            var name = req.url.split(/\//, 2)[1] || 'index';
-            let files = fs.readdirSync(controllerDir);
-            var re = new RegExp(name + 'Controller\.js$', 'i');
-            var file = files.filter(file => re.test(file))[0];
-            let module = require(path.join(controllerDir, file));
-            let controllerClass: ConstructorFor<any> = module[file.replace(/.js/, '')];
-            let route: string = Reflect.getMetadata(MetadataSymbols.ControllerRoutePrefixSymbol, controllerClass) || getControllerName(controllerClass);
-            if (options.debugRoutes) {
-                console.log(`  + ${route}`);
-            }
-            let router = express.Router();
-            if (options.transientControllers) {
-                setRoutesTransient(controllerClass, router, dependencyManager, options.debugRoutes || false);
-            } else {
-                setRoutesSingleton(controllerClass, router, dependencyManager, options.debugRoutes || false);
-            }
-            app.use('/' + route, router);
-
-        });
-        return mvcApp;
-    }
-
 }
 
 export interface SetupOptions {

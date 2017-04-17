@@ -1,6 +1,6 @@
 {
   "name": "express-mvc-ts",
-  "version": "0.9.0-beta",
+  "version": "0.9.1-beta",
   "description": ".NET MVC-like controller structure for Express.js in Typescript",
   "homepage": "https://github.com/boykathemad/express-mvc-ts",
   "author": {
@@ -31,19 +31,20 @@
   },
   "optionalDependencies": {},
   "devDependencies": {
-    "gulp": "^3.9.0",
+    "@types/express": "^4.0.33",
+    "@types/reflect-metadata": "~0.0.5",
     "del": "^2.2.2",
     "dot": "^1.0.3",
+    "gulp": "^3.9.0",
     "gulp-concat": "^2.6.0",
-    "gulp-shell": "^0.5.2",
-    "gulp-run": "^1.7.1",
     "gulp-rename": "^1.2.2",
-    "typescript": "~2.0.3",
+    "gulp-run": "^1.7.1",
+    "gulp-shell": "^0.5.2",
+    "gulp-util": "^3.0.8",
     "rollup": "^0.36.1",
-    "through2": "^2.0.1",
     "rollup-plugin-typescript": "^0.8.1",
-    "@types/express": "^4.0.33",
-    "@types/reflect-metadata": "~0.0.5"
+    "through2": "^2.0.1",
+    "typescript": "~2.0.3"
   },
   "engines": {
     "node": ">=4.0.0"
