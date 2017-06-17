@@ -1,12 +1,6 @@
 ﻿{
     "compilerOptions": {
-        "noImplicitAny": true,
         "removeComments": true,
-        "noImplicitThis": true,
-        "noResolve": true,
-        "noImplicitReturns": true,
-        "strictNullChecks": true,
-        "noImplicitUseStrict": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "module": "commonjs",
@@ -20,7 +14,8 @@
         "outDir": "build",
         "declaration": true,
         "declarationDir": "declarations",
-        "sourceMap": false
+        "sourceMap": false,
+        "typeRoots" : ["./node_modules/@types"]
     },
     "include": [
         "src/*.ts"

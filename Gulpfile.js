@@ -18,14 +18,14 @@ gulp.task('clean', function () {
     ]);
 });
 
-gulp.task('build', function () {
+gulp.task('build', ['compile'], function () {
     return gulp.src(['src/index.ts'])
         .pipe(run('rollup <%= file.path %> --format cjs --config', { silent: true }))
         .pipe(rename('index.js'))
         .pipe(gulp.dest('.'));
 });
 
-gulp.task('dts', ['compile'], function () {
+gulp.task('dts', function () {
     return gulp.src(['declarations/*.d.ts'])
         .pipe(dts.stripDeclares())
         .pipe(concat('express-mvc-ts.d.ts'))

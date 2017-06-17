@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { RouteMetadata, RouteParameterMetadata, MetadataSymbols } from './annotations.g';
+import { RouteMetadata, RouteParameterMetadata, MetadataSymbols, RouteMiddlewareMetadata } from './annotations.g';
 import { dm, DependencyManager, ConstructorFor } from './dependency';
 import { IController, handleResult, getControllerName } from './controller';
 
@@ -17,6 +17,7 @@ export interface ControllerInfo {
     instance?: IController;
 }
 
+export type ExpressCallback = (req: express.Request, res: express.Response, next: (err?: Error) => void) => void;
 export interface Request extends express.Request { }
 export class Request { constructor() { } }
 export interface Response extends express.Response { }
@@ -91,15 +92,25 @@ namespace routing {
         routes.forEach(route => {
             let method: Function = (router as any)[route.method];
             let paramFunc: Function | null = createParamFunction(route, controllerClass);
-            if (debug) {
-                console.log(`  |- ${route.method} /${route.route}`);
-            }
-            method.call(router, '/' + route.route, (req: express.Request, res: express.Response, next: (err?: Error) => void) => {
+            let middleware: RouteMiddlewareMetadata[] = Reflect.getMetadata(MetadataSymbols.ControllerRouteMiddlewareSymbol, controllerClass, route.name);
+            let args: [string, ExpressCallback] = ['/' + route.route, (req: express.Request, res: express.Response, next: (err?: Error) => void) => {
                 var resultPromise = paramFunc ? route.handler.apply(controller, paramFunc(req, res, dm)) : route.handler.call(controller);
                 if (resultPromise && typeof resultPromise.then === 'function') {
                     resultPromise.then((result: any) => handleResult(res, next, result));
                 }
-            });
+            }];
+
+            if (debug) {
+                console.log(`  |- ${route.method} /${route.route}`);
+            }
+            
+            if(Array.isArray(middleware)) {
+                middleware.forEach((item, index) => {
+                    args.splice(1 + index, 0, item.handler);
+                });
+            }
+
+            method.apply(router, args);
         });
         return controller;
     }

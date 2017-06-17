@@ -8,6 +8,7 @@ var path = require('path');
 
 (function (MetadataSymbols) {
     MetadataSymbols.ControllerRoutesSymbol = Symbol.for("mvc:controller:routes");
+    MetadataSymbols.ControllerRouteMiddlewareSymbol = Symbol.for("mvc:controller:route:middleware");
     MetadataSymbols.ControllerRoutePrefixSymbol = Symbol.for("mvc:controller:routePrefix");
     MetadataSymbols.ControllerRouteParamsSymbol = Symbol.for("mvc:controller:route:params");
     MetadataSymbols.DependencyInjectionTypesSymbol = Symbol.for("mvc:diTypes");
@@ -20,6 +21,21 @@ function addRouteMetadata(target, name, method, route, handler) {
     }
     existingData.push({ method: method, name: name, route: route === 'index' ? '' : route, handler: handler });
     Reflect.defineMetadata(exports.MetadataSymbols.ControllerRoutesSymbol, existingData, target);
+}
+function addMiddleware(target, name, handler) {
+    var existingData = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, target, name);
+    if (existingData === undefined) {
+        existingData = [];
+    }
+    existingData.push({ handler: handler });
+    Reflect.defineMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, existingData, target, name);
+}
+function Middleware(handler, p1, p2) {
+    var f = function (target, propertyKey, descriptor) {
+        addMiddleware(target.constructor, propertyKey, handler);
+        return descriptor;
+    };
+    return typeof handler === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpGet(route, p1, p2) {
     var f = function (target, propertyKey, descriptor) {
@@ -328,15 +344,22 @@ var routing;
         routes.forEach(function (route) {
             var method = router[route.method];
             var paramFunc = createParamFunction(route, controllerClass);
+            var middleware = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, controllerClass, route.name);
+            var args = ['/' + route.route, function (req, res, next) {
+                    var resultPromise = paramFunc ? route.handler.apply(controller, paramFunc(req, res, dm$$1)) : route.handler.call(controller);
+                    if (resultPromise && typeof resultPromise.then === 'function') {
+                        resultPromise.then(function (result) { return handleResult(res, next, result); });
+                    }
+                }];
             if (debug) {
                 console.log("  |- " + route.method + " /" + route.route);
             }
-            method.call(router, '/' + route.route, function (req, res, next) {
-                var resultPromise = paramFunc ? route.handler.apply(controller, paramFunc(req, res, dm$$1)) : route.handler.call(controller);
-                if (resultPromise && typeof resultPromise.then === 'function') {
-                    resultPromise.then(function (result) { return handleResult(res, next, result); });
-                }
-            });
+            if (Array.isArray(middleware)) {
+                middleware.forEach(function (item, index) {
+                    args.splice(1 + index, 0, item.handler);
+                });
+            }
+            method.apply(router, args);
         });
         return controller;
     }
@@ -396,6 +419,7 @@ function setup(app, options) {
 
 require('reflect-metadata');
 
+exports.Middleware = Middleware;
 exports.HttpGet = HttpGet;
 exports.HttpPost = HttpPost;
 exports.HttpPut = HttpPut;

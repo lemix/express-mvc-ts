@@ -1,8 +1,10 @@
 declare module 'express-mvc-ts' {
     // begin module
     import * as express from 'express';
+    import { ExpressCallback } from "./index";
     export namespace MetadataSymbols {
         const ControllerRoutesSymbol: symbol;
+        const ControllerRouteMiddlewareSymbol: symbol;
         const ControllerRoutePrefixSymbol: symbol;
         const ControllerRouteParamsSymbol: symbol;
         const DependencyInjectionTypesSymbol: symbol;
@@ -14,6 +16,11 @@ declare module 'express-mvc-ts' {
         name: string;
         handler: Function;
     }
+    export interface RouteMiddlewareMetadata {
+        handler: ExpressCallback;
+    }
+    export function Middleware(handler: ExpressCallback): (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
+    export function Middleware(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any>;
     export function HttpGet(route?: string): (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
     export function HttpGet(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any>;
     export function HttpPost(route?: string): (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
@@ -54,6 +61,7 @@ declare module 'express-mvc-ts' {
 
 
 
+
     export interface IController {
         router: express.Router;
     }
@@ -68,6 +76,7 @@ declare module 'express-mvc-ts' {
         protected json(data: any): Promise<JsonResult>;
         protected content(data: any): Promise<ContentResult>;
         protected file(data: any): Promise<FileContentResult>;
+        protected next(err?: Error): Promise<NextResult>;
     }
     export interface ViewResult {
         type: "view";
@@ -90,8 +99,12 @@ declare module 'express-mvc-ts' {
         type: "file";
         data: string;
     }
-    export type RouteResult = ViewResult | JsonResult | RedirectResult | ContentResult | FileContentResult;
-    export function handleResult(res: express.Response, result: RouteResult): void;
+    export interface NextResult {
+        type: "next";
+        err: Error;
+    }
+    export type RouteResult = ViewResult | JsonResult | RedirectResult | ContentResult | FileContentResult | NextResult;
+    export function handleResult(res: express.Response, next: (err?: Error) => void, result: RouteResult): void;
     export function getControllerName(controller: Function): string;
 
     export interface ConstructorFor<T> {
@@ -113,6 +126,7 @@ declare module 'express-mvc-ts' {
 
 
 
+
     export class MvcApp {
         controllers: ControllerInfo[];
         rootRouter: express.Router;
@@ -123,6 +137,7 @@ declare module 'express-mvc-ts' {
         type: ConstructorFor<IController>;
         instance?: IController;
     }
+    export type ExpressCallback = (req: express.Request, res: express.Response, next: (err?: Error) => void) => void;
     export interface Request extends express.Request {
     }
     export class Request {

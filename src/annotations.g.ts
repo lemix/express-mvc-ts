@@ -1,6 +1,9 @@
 
+import { ExpressCallback } from "./index";
+
 export namespace MetadataSymbols {
     export const ControllerRoutesSymbol = Symbol.for("mvc:controller:routes");
+    export const ControllerRouteMiddlewareSymbol = Symbol.for("mvc:controller:route:middleware");
     export const ControllerRoutePrefixSymbol = Symbol.for("mvc:controller:routePrefix");
     export const ControllerRouteParamsSymbol = Symbol.for("mvc:controller:route:params");
     export const DependencyInjectionTypesSymbol = Symbol.for("mvc:diTypes");
@@ -14,6 +17,10 @@ export interface RouteMetadata {
     handler: Function;
 }
 
+export interface RouteMiddlewareMetadata {
+    handler: ExpressCallback
+}
+
 function addRouteMetadata(target: Object, name: string, method: string, route: string, handler: Function) {
     let existingData: RouteMetadata[] = Reflect.getMetadata(MetadataSymbols.ControllerRoutesSymbol, target);
     if (existingData === undefined) {
@@ -23,6 +30,24 @@ function addRouteMetadata(target: Object, name: string, method: string, route: s
     Reflect.defineMetadata(MetadataSymbols.ControllerRoutesSymbol, existingData, target);
 }
 
+function addMiddleware(target: Object, name: string, handler: ExpressCallback) {
+    let existingData: RouteMiddlewareMetadata[] = Reflect.getMetadata(MetadataSymbols.ControllerRouteMiddlewareSymbol, target, name);
+    if (existingData === undefined) {
+        existingData = [];
+    }
+    existingData.push({ handler });
+    Reflect.defineMetadata(MetadataSymbols.ControllerRouteMiddlewareSymbol, existingData, target, name);
+}
+
+export function Middleware(handler: ExpressCallback) : (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
+export function Middleware(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>):TypedPropertyDescriptor<any>;
+export function Middleware(handler?: ExpressCallback | Object, p1?: string, p2?: TypedPropertyDescriptor<any>) {
+    let f = function(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
+        addMiddleware(target.constructor, propertyKey, <ExpressCallback>handler);
+        return descriptor;
+    };
+    return typeof handler === 'object' ? f.apply(undefined, arguments) : f;
+}
 
 export function HttpGet(route?: string) : (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
 export function HttpGet(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>):TypedPropertyDescriptor<any>;
@@ -33,7 +58,6 @@ export function HttpGet(route?: Object, p1?: string, p2?: TypedPropertyDescripto
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
-
 
 export function HttpPost(route?: string) : (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
 export function HttpPost(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>):TypedPropertyDescriptor<any>;
