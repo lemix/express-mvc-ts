@@ -131,7 +131,7 @@ namespace routing {
             });
         });
     }
-    const controllerFileMatcher = /([A-Za-z0-9]+)Controller\.js$/;
+    const controllerFileMatcher = /([A-Za-z0-9]+)Controller(\.js|\.ts)$/;
 
     export function setup(app: express.Express, options: SetupOptions = {}): MvcApp {
         let controllerDir = options.controllerDir || path.join(process.cwd(), 'controllers');
@@ -141,7 +141,7 @@ namespace routing {
         mvcApp.rootRouter = options.singleRouterToApp ? express.Router() : app;
         mvcApp.controllers = files.filter(file => controllerFileMatcher.test(file)).map(file => {
             let module = require(path.join(controllerDir, file));
-            let controllerClass: ConstructorFor<IController> = module[file.replace(/.js/, '')];
+            let controllerClass: ConstructorFor<IController> = module[file.replace(/\.js|\.ts/, '')];
             let route: string = Reflect.getMetadata(MetadataSymbols.ControllerRoutePrefixSymbol, controllerClass);
             if (route === undefined) {
                 route = getControllerName(controllerClass);
