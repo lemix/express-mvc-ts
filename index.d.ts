@@ -1,7 +1,8 @@
 declare module 'express-mvc-ts' {
     // begin module
     import * as express from 'express';
-    import { ExpressCallback } from "./index";
+
+    export type ExpressCallback = (req: express.Request, res: express.Response, next: (err?: Error) => void) => void;
     export namespace MetadataSymbols {
         const ControllerRoutesSymbol: unique symbol;
         const ControllerRouteMiddlewareSymbol: unique symbol;
@@ -17,9 +18,9 @@ declare module 'express-mvc-ts' {
         handler: Function;
     }
     export interface RouteMiddlewareMetadata {
-        handler: ExpressCallback;
+        handler: (req: express.Request, res: express.Response, next: (err?: Error) => void) => void;
     }
-    export function Middleware(handler: ExpressCallback): (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
+    export function Middleware(handler: (req: express.Request, res: express.Response, next: (err?: Error) => void) => void): (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
     export function Middleware(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any>;
     export function HttpGet(route?: string): (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
     export function HttpGet(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any>;
@@ -133,7 +134,6 @@ declare module 'express-mvc-ts' {
         type: ConstructorFor<IController>;
         instance?: IController;
     }
-    export type ExpressCallback = (req: express.Request, res: express.Response, next: (err?: Error) => void) => void;
     export interface Request extends express.Request {
     }
     export class Request {

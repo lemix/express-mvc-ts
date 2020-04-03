@@ -1,5 +1,5 @@
-
-import { ExpressCallback } from "./index";
+import * as express from 'express';
+export type ExpressCallback = (req: express.Request, res: express.Response, next: (err?: Error) => void) => void;
 
 export namespace MetadataSymbols {
     export const ControllerRoutesSymbol = Symbol.for("mvc:controller:routes");
@@ -18,7 +18,7 @@ export interface RouteMetadata {
 }
 
 export interface RouteMiddlewareMetadata {
-    handler: ExpressCallback
+    handler: (req: express.Request, res: express.Response, next: (err?: Error) => void) => void
 }
 
 function addRouteMetadata(target: Object, name: string, method: string, route: string, handler: Function) {
@@ -30,7 +30,7 @@ function addRouteMetadata(target: Object, name: string, method: string, route: s
     Reflect.defineMetadata(MetadataSymbols.ControllerRoutesSymbol, existingData, target);
 }
 
-function addMiddleware(target: Object, name: string, handler: ExpressCallback) {
+function addMiddleware(target: Object, name: string, handler: (req: express.Request, res: express.Response, next: (err?: Error) => void) => void) {
     let existingData: RouteMiddlewareMetadata[] = Reflect.getMetadata(MetadataSymbols.ControllerRouteMiddlewareSymbol, target, name);
     if (existingData === undefined) {
         existingData = [];
@@ -39,11 +39,11 @@ function addMiddleware(target: Object, name: string, handler: ExpressCallback) {
     Reflect.defineMetadata(MetadataSymbols.ControllerRouteMiddlewareSymbol, existingData, target, name);
 }
 
-export function Middleware(handler: ExpressCallback) : (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
+export function Middleware(handler: (req: express.Request, res: express.Response, next: (err?: Error) => void) => void) : (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
 export function Middleware(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>):TypedPropertyDescriptor<any>;
-export function Middleware(handler?: ExpressCallback | Object, p1?: string, p2?: TypedPropertyDescriptor<any>) {
+export function Middleware(handler?: (req: express.Request, res: express.Response, next: (err?: Error) => void) => void | Object, p1?: string, p2?: TypedPropertyDescriptor<any>) {
     let f = function(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
-        addMiddleware(target.constructor, propertyKey, <ExpressCallback>handler);
+        addMiddleware(target.constructor, propertyKey, <(req: express.Request, res: express.Response, next: (err?: Error) => void) => void>handler);
         return descriptor;
     };
     return typeof handler === 'object' ? f.apply(undefined, arguments) : f;
@@ -140,7 +140,7 @@ export function Route(target?: Object, p1?: string, p2?: TypedPropertyDescriptor
         return _target;
     }
     const f = function () {
-        if (arguments.length === 1) {
+        if (typeof arguments[1] === "undefined") {
             return routeClass.apply(undefined, arguments);
         }
         return routeMethod.apply(undefined, arguments);

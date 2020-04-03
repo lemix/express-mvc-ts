@@ -17,7 +17,6 @@ export interface ControllerInfo {
     instance?: IController;
 }
 
-export type ExpressCallback = (req: express.Request, res: express.Response, next: (err?: Error) => void) => void;
 export interface Request extends express.Request { }
 export class Request { constructor() { } }
 export interface Response extends express.Response { }
@@ -93,7 +92,7 @@ namespace routing {
             let method: Function = (router as any)[route.method];
             let paramFunc: Function | null = createParamFunction(route, controllerClass);
             let middleware: RouteMiddlewareMetadata[] = Reflect.getMetadata(MetadataSymbols.ControllerRouteMiddlewareSymbol, controllerClass, route.name);
-            let args: [string, ExpressCallback] = ['/' + route.route, (req: express.Request, res: express.Response, next: (err?: Error) => void) => {
+            let args: [string, (req: express.Request, res: express.Response, next: (err?: Error) => void) => void] = ['/' + route.route, (req: express.Request, res: express.Response, next: (err?: Error) => void) => {
                 var resultPromise = paramFunc ? route.handler.apply(controller, paramFunc(req, res, dm)) : route.handler.call(controller);
                 if (resultPromise && typeof resultPromise.then === 'function') {
                     resultPromise.then((result: any) => handleResult(res, next, result));

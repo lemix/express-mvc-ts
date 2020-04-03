@@ -96,7 +96,7 @@ function Route(target, p1, p2) {
         return _target;
     };
     const f = function () {
-        if (arguments.length === 1) {
+        if (typeof arguments[1] === "undefined") {
             return routeClass.apply(undefined, arguments);
         }
         return routeMethod.apply(undefined, arguments);
