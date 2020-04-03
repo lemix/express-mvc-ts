@@ -130,21 +130,22 @@ export function Route<TFunction extends Function>(route?: string) : (target:TFun
 export function Route<TFunction extends Function>(target: TFunction) : any;
 export function Route(route?: string) : (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => TypedPropertyDescriptor<any>;
 export function Route(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>):TypedPropertyDescriptor<any>;
-export function Route(route?: Object, p1?: string, p2?: TypedPropertyDescriptor<any>) {
-    let routeMethod = function(target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
-        addRouteMetadata(target.constructor, propertyKey, "all", typeof route === 'string' ? route : propertyKey, descriptor.value);
+export function Route(target?: Object, p1?: string, p2?: TypedPropertyDescriptor<any>) {
+    const routeMethod = function (_target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) {
+        addRouteMetadata(_target.constructor, propertyKey, "all", typeof target === 'string' ? target : propertyKey, descriptor.value);
         return descriptor;
     }
-    let routeClass = function(target: Object) {
-        Reflect.defineMetadata(MetadataSymbols.ControllerRoutePrefixSymbol, typeof route === 'string' ? route : (<any>target).name, target);
-        return target;
+    const routeClass = function (_target: Object) {
+        Reflect.defineMetadata(MetadataSymbols.ControllerRoutePrefixSymbol, typeof target === 'string' ? target : (<any>_target).name.replace(/Controller$/, ""), _target);
+        return _target;
     }
-    return function() {
+    const f = function () {
         if (arguments.length === 1) {
             return routeClass.apply(undefined, arguments);
         }
         return routeMethod.apply(undefined, arguments);
     }
+    return typeof target === 'object' ? f.apply(undefined, arguments) : f;
 }
 
 export interface RouteParameterMetadata {

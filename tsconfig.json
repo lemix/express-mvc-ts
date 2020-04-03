@@ -4,13 +4,7 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "module": "commonjs",
-        "target": "es5",
-        "lib": [
-            "es5",
-            "es2015.promise",
-            "es2015.symbol",
-            "es2015.collection"
-        ],
+        "target": "es6",
         "outDir": "build",
         "declaration": true,
         "declarationDir": "declarations",

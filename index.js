@@ -15,133 +15,134 @@ var path = require('path');
     MetadataSymbols.DependencyServiceTypeSymbol = Symbol.for("mvc:serviceType");
 })(exports.MetadataSymbols || (exports.MetadataSymbols = {}));
 function addRouteMetadata(target, name, method, route, handler) {
-    var existingData = Reflect.getMetadata(exports.MetadataSymbols.ControllerRoutesSymbol, target);
+    let existingData = Reflect.getMetadata(exports.MetadataSymbols.ControllerRoutesSymbol, target);
     if (existingData === undefined) {
         existingData = [];
     }
-    existingData.push({ method: method, name: name, route: route === 'index' ? '' : route, handler: handler });
+    existingData.push({ method, name, route: route === 'index' ? '' : route, handler });
     Reflect.defineMetadata(exports.MetadataSymbols.ControllerRoutesSymbol, existingData, target);
 }
 function addMiddleware(target, name, handler) {
-    var existingData = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, target, name);
+    let existingData = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, target, name);
     if (existingData === undefined) {
         existingData = [];
     }
-    existingData.push({ handler: handler });
+    existingData.push({ handler });
     Reflect.defineMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, existingData, target, name);
 }
 function Middleware(handler, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addMiddleware(target.constructor, propertyKey, handler);
         return descriptor;
     };
     return typeof handler === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpGet(route, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addRouteMetadata(target.constructor, propertyKey, "get", typeof route === 'string' ? route : propertyKey.replace(/^(.+)Get$/, '$1'), descriptor.value);
         return descriptor;
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpPost(route, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addRouteMetadata(target.constructor, propertyKey, "post", typeof route === 'string' ? route : propertyKey.replace(/^(.+)Post$/, '$1'), descriptor.value);
         return descriptor;
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpPut(route, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addRouteMetadata(target.constructor, propertyKey, "put", typeof route === 'string' ? route : propertyKey.replace(/^(.+)Put$/, '$1'), descriptor.value);
         return descriptor;
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpPatch(route, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addRouteMetadata(target.constructor, propertyKey, "patch", typeof route === 'string' ? route : propertyKey.replace(/^(.+)Patch$/, '$1'), descriptor.value);
         return descriptor;
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpDelete(route, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addRouteMetadata(target.constructor, propertyKey, "delete", typeof route === 'string' ? route : propertyKey.replace(/^(.+)Delete$/, '$1'), descriptor.value);
         return descriptor;
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpOptions(route, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addRouteMetadata(target.constructor, propertyKey, "options", typeof route === 'string' ? route : propertyKey.replace(/^(.+)Options$/, '$1'), descriptor.value);
         return descriptor;
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
 function HttpHead(route, p1, p2) {
-    var f = function (target, propertyKey, descriptor) {
+    let f = function (target, propertyKey, descriptor) {
         addRouteMetadata(target.constructor, propertyKey, "head", typeof route === 'string' ? route : propertyKey.replace(/^(.+)Head$/, '$1'), descriptor.value);
         return descriptor;
     };
     return typeof route === 'object' ? f.apply(undefined, arguments) : f;
 }
-function Route(route, p1, p2) {
-    var routeMethod = function (target, propertyKey, descriptor) {
-        addRouteMetadata(target.constructor, propertyKey, "all", typeof route === 'string' ? route : propertyKey, descriptor.value);
+function Route(target, p1, p2) {
+    const routeMethod = function (_target, propertyKey, descriptor) {
+        addRouteMetadata(_target.constructor, propertyKey, "all", typeof target === 'string' ? target : propertyKey, descriptor.value);
         return descriptor;
     };
-    var routeClass = function (target) {
-        Reflect.defineMetadata(exports.MetadataSymbols.ControllerRoutePrefixSymbol, typeof route === 'string' ? route : target.name, target);
-        return target;
+    const routeClass = function (_target) {
+        Reflect.defineMetadata(exports.MetadataSymbols.ControllerRoutePrefixSymbol, typeof target === 'string' ? target : _target.name.replace(/Controller$/, ""), _target);
+        return _target;
     };
-    return function () {
+    const f = function () {
         if (arguments.length === 1) {
             return routeClass.apply(undefined, arguments);
         }
         return routeMethod.apply(undefined, arguments);
     };
+    return typeof target === 'object' ? f.apply(undefined, arguments) : f;
 }
 function addParameterMetadata(target, propertyKey, parameterIndex, kind, paramName) {
-    var metadata = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteParamsSymbol, target, propertyKey) || [];
-    var params = Reflect.getMetadata("design:paramtypes", target, propertyKey) || [];
-    metadata.push({ index: parameterIndex, kind: kind, type: params[parameterIndex], name: paramName });
+    let metadata = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteParamsSymbol, target, propertyKey) || [];
+    let params = Reflect.getMetadata("design:paramtypes", target, propertyKey) || [];
+    metadata.push({ index: parameterIndex, kind, type: params[parameterIndex], name: paramName });
     Reflect.defineMetadata(exports.MetadataSymbols.ControllerRouteParamsSymbol, metadata, target, propertyKey);
 }
 function FromBody(name) {
-    var f = function (target, propertyKey, parameterIndex) {
+    let f = function (target, propertyKey, parameterIndex) {
         addParameterMetadata(target, propertyKey, parameterIndex, "body", typeof name === 'string' ? name : undefined);
     };
     return typeof name === 'object' ? f.apply(undefined, arguments) : f;
 }
 function FromForm(name) {
-    var f = function (target, propertyKey, parameterIndex) {
+    let f = function (target, propertyKey, parameterIndex) {
         addParameterMetadata(target, propertyKey, parameterIndex, "form", typeof name === 'string' ? name : undefined);
     };
     return typeof name === 'object' ? f.apply(undefined, arguments) : f;
 }
 function FromHeader(name) {
-    var f = function (target, propertyKey, parameterIndex) {
+    let f = function (target, propertyKey, parameterIndex) {
         addParameterMetadata(target, propertyKey, parameterIndex, "header", typeof name === 'string' ? name : undefined);
     };
     return typeof name === 'object' ? f.apply(undefined, arguments) : f;
 }
 function FromQuery(name) {
-    var f = function (target, propertyKey, parameterIndex) {
+    let f = function (target, propertyKey, parameterIndex) {
         addParameterMetadata(target, propertyKey, parameterIndex, "query", typeof name === 'string' ? name : undefined);
     };
     return typeof name === 'object' ? f.apply(undefined, arguments) : f;
 }
 function FromRoute(name) {
-    var f = function (target, propertyKey, parameterIndex) {
+    let f = function (target, propertyKey, parameterIndex) {
         addParameterMetadata(target, propertyKey, parameterIndex, "route", typeof name === 'string' ? name : undefined);
     };
     return typeof name === 'object' ? f.apply(undefined, arguments) : f;
 }
 function Inject(target) {
     if (Reflect.hasMetadata('design:paramtypes', target)) {
-        var types = Reflect.getMetadata('design:paramtypes', target).map(function (type) { return Reflect.hasMetadata(exports.MetadataSymbols.DependencyServiceTypeSymbol, type) ? type : null; });
-        if (types.some(function (type) { return type !== null; })) {
+        var types = Reflect.getMetadata('design:paramtypes', target).map((type) => Reflect.hasMetadata(exports.MetadataSymbols.DependencyServiceTypeSymbol, type) ? type : null);
+        if (types.some((type) => type !== null)) {
             Reflect.defineMetadata(exports.MetadataSymbols.DependencyInjectionTypesSymbol, types, target);
         }
     }
@@ -158,13 +159,13 @@ function TransientService(target) {
     return target;
 }
 
-var DependencyManager = (function () {
-    function DependencyManager() {
+class DependencyManager {
+    constructor() {
         this.instances = new Map();
     }
-    DependencyManager.prototype.getServiceInstance = function (type) {
+    getServiceInstance(type) {
         if (Reflect.getMetadata(exports.MetadataSymbols.DependencyServiceTypeSymbol, type) === 'singleton') {
-            var instance = this.instances.get(type);
+            let instance = this.instances.get(type);
             if (!instance) {
                 instance = this.getInstance(type);
                 this.instances.set(type, instance);
@@ -174,16 +175,16 @@ var DependencyManager = (function () {
         else {
             return this.getInstance(type);
         }
-    };
-    DependencyManager.prototype.getInstance = function (ctor) {
+    }
+    getInstance(ctor) {
         if (!Reflect.hasMetadata(exports.MetadataSymbols.DependencyInjectionTypesSymbol, ctor)) {
             return new ctor;
         }
-        var injectTypes = Reflect.getMetadata(exports.MetadataSymbols.DependencyInjectionTypesSymbol, ctor);
-        var foundOne = false;
-        var params = [];
-        for (var i = injectTypes.length - 1; i >= 0; --i) {
-            var type = injectTypes[i];
+        let injectTypes = Reflect.getMetadata(exports.MetadataSymbols.DependencyInjectionTypesSymbol, ctor);
+        let foundOne = false;
+        let params = [];
+        for (let i = injectTypes.length - 1; i >= 0; --i) {
+            let type = injectTypes[i];
             if (!foundOne) {
                 if (type === null) {
                     continue;
@@ -196,17 +197,16 @@ var DependencyManager = (function () {
         }
         params.unshift(null);
         return new (Function.prototype.bind.apply(ctor, params));
-    };
-    return DependencyManager;
-}());
-var dm = new DependencyManager();
-
-var Controller = (function () {
-    function Controller() {
     }
-    Controller.prototype.view = function (arg1, arg2) {
-        var viewName = 'index';
-        var modelData = undefined;
+}
+const dm = new DependencyManager();
+
+class Controller {
+    constructor() {
+    }
+    view(arg1, arg2) {
+        let viewName = 'index';
+        let modelData = undefined;
         if (typeof arg1 === 'object') {
             modelData = arg1;
         }
@@ -215,24 +215,23 @@ var Controller = (function () {
             modelData = arg2;
         }
         return Promise.resolve({ type: 'view', name: getControllerName(this.constructor) + '/' + viewName, data: modelData });
-    };
-    Controller.prototype.redirect = function (url) {
-        return Promise.resolve({ type: 'redirect', url: url });
-    };
-    Controller.prototype.json = function (data) {
-        return Promise.resolve({ type: 'json', data: data });
-    };
-    Controller.prototype.content = function (data) {
-        return Promise.resolve({ type: 'content', data: data });
-    };
-    Controller.prototype.file = function (data) {
-        return Promise.resolve({ type: 'file', data: data });
-    };
-    Controller.prototype.next = function (err) {
+    }
+    redirect(url) {
+        return Promise.resolve({ type: 'redirect', url });
+    }
+    json(data) {
+        return Promise.resolve({ type: 'json', data });
+    }
+    content(data) {
+        return Promise.resolve({ type: 'content', data });
+    }
+    file(data) {
+        return Promise.resolve({ type: 'file', data });
+    }
+    next(err) {
         return Promise.resolve({ type: 'next', err: err });
-    };
-    return Controller;
-}());
+    }
+}
 function handleResult(res, next, result) {
     switch (result.type) {
         case 'next':
@@ -265,25 +264,18 @@ function getControllerName(controller) {
     return lcFirst(controller.name.replace(/Controller$/, ''));
 }
 
-var MvcApp = (function () {
-    function MvcApp() {
-    }
-    return MvcApp;
-}());
-var Request = (function () {
-    function Request() {
-    }
-    return Request;
-}());
-var Response = (function () {
-    function Response() {
-    }
-    return Response;
-}());
+class MvcApp {
+}
+class Request {
+    constructor() { }
+}
+class Response {
+    constructor() { }
+}
 var routing;
 (function (routing) {
     function getParamNames(func) {
-        var code = func.toString().replace(/((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg, '');
+        let code = func.toString().replace(/((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg, '');
         var result = code.slice(code.indexOf('(') + 1, code.indexOf(')')).match(/([^\s,]+)/g);
         if (result !== null) {
             return Array.prototype.slice.call(result);
@@ -291,71 +283,71 @@ var routing;
         return [];
     }
     function createParamFunction(route, controllerClass) {
-        var paramTypes = Reflect.getMetadata("design:paramtypes", controllerClass.prototype, route.name);
-        var paramAnnotations = [];
-        var params = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteParamsSymbol, controllerClass.prototype, route.name);
+        let paramTypes = Reflect.getMetadata("design:paramtypes", controllerClass.prototype, route.name);
+        let paramAnnotations = [];
+        let params = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteParamsSymbol, controllerClass.prototype, route.name);
         if (params) {
-            params.forEach(function (p) { return paramAnnotations[p.index] = p; });
+            params.forEach(p => paramAnnotations[p.index] = p);
         }
         if (paramTypes && paramTypes.length) {
-            var paramNames_1 = getParamNames(route.handler);
-            var args = paramTypes.map(function (p, i) {
+            let paramNames = getParamNames(route.handler);
+            let args = paramTypes.map((p, i) => {
                 if (p === Request) {
                     return 'req';
                 }
                 if (p === Response) {
                     return 'res';
                 }
-                var prefix = p === Number ? '+' : p === Boolean ? '!!' : '';
+                let prefix = p === Number ? '+' : p === Boolean ? '!!' : '';
                 if (paramAnnotations[i]) {
-                    var name = paramAnnotations[i].name || paramNames_1[i];
+                    let name = paramAnnotations[i].name || paramNames[i];
                     switch (paramAnnotations[i].kind) {
                         case 'body':
-                            return "req.body";
+                            return `req.body`;
                         case 'form':
-                            return "req.body && " + prefix + "req.body['" + name + "']";
+                            return `req.body && ${prefix}req.body['${name}']`;
                         case 'header':
-                            return prefix + "req.get('" + name + "')";
+                            return `${prefix}req.get('${name}')`;
                         case 'query':
-                            return prefix + "req.query['" + name + "']";
+                            return `${prefix}req.query['${name}']`;
                         case 'route':
-                            return prefix + "req.params['" + name + "']";
+                            return `${prefix}req.params['${name}']`;
                         case 'null':
                         default:
                             return 'null';
                     }
                 }
                 if (typeof p === 'function' && [Number, String, Boolean, Array].indexOf(p) < 0) {
-                    return "dm.getInstance(" + p.name + ")";
+                    return `dm.getInstance(${p.name})`;
                 }
-                return "req.params['" + paramNames_1[i] + "'] !== undefined ? " + prefix + "req.params['" + paramNames_1[i] + "'] : " + prefix + "req.query['" + paramNames_1[i] + "']";
+                return `req.params['${paramNames[i]}'] !== undefined ? ${prefix}req.params['${paramNames[i]}'] : ${prefix}req.query['${paramNames[i]}']`;
             });
-            return new Function('req', 'res', 'dm', "return [" + args.join(', ') + "]");
+            return new Function('req', 'res', 'dm', `return [${args.join(', ')}]`);
         }
         return null;
     }
     function setRoutesSingleton(controllerClass, router, dm$$1, debug) {
-        var controller;
+        let controller;
         controller = dm$$1.getInstance(controllerClass);
-        var routes = Reflect.getMetadata(exports.MetadataSymbols.ControllerRoutesSymbol, controllerClass);
+        let routes = Reflect.getMetadata(exports.MetadataSymbols.ControllerRoutesSymbol, controllerClass);
         if (!routes) {
             return controller;
         }
-        routes.forEach(function (route) {
-            var method = router[route.method];
-            var paramFunc = createParamFunction(route, controllerClass);
-            var middleware = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, controllerClass, route.name);
-            var args = ['/' + route.route, function (req, res, next) {
+        routes.forEach(route => {
+            let method = router[route.method];
+            let paramFunc = createParamFunction(route, controllerClass);
+            let middleware = Reflect.getMetadata(exports.MetadataSymbols.ControllerRouteMiddlewareSymbol, controllerClass, route.name);
+            let args = ['/' + route.route, (req, res, next) => {
                     var resultPromise = paramFunc ? route.handler.apply(controller, paramFunc(req, res, dm$$1)) : route.handler.call(controller);
                     if (resultPromise && typeof resultPromise.then === 'function') {
-                        resultPromise.then(function (result) { return handleResult(res, next, result); });
+                        resultPromise.then((result) => handleResult(res, next, result));
                     }
                 }];
             if (debug) {
-                console.log("  |- " + route.method + " /" + route.route);
+                console.log(`  |- ${route.method} /${route.route}`);
             }
             if (Array.isArray(middleware)) {
-                middleware.forEach(function (item, index) {
+                middleware.forEach((item, index) => {
                     args.splice(1 + index, 0, item.handler);
                 });
             }
@@ -364,41 +356,40 @@ var routing;
         return controller;
     }
     function setRoutesTransient(controllerClass, router, dm$$1, debug) {
-        var routes = Reflect.getMetadata("controller:routes", controllerClass);
+        let routes = Reflect.getMetadata("controller:routes", controllerClass);
         if (!routes) {
             return;
         }
-        routes.forEach(function (route) {
-            var method = router[route.method];
-            method.call(router, '/' + route.route, function (req, res, next) {
-                var controller = dm$$1.getInstance(controllerClass);
+        routes.forEach(route => {
+            let method = router[route.method];
+            method.call(router, '/' + route.route, (req, res, next) => {
+                let controller = dm$$1.getInstance(controllerClass);
                 var resultPromise = route.handler.call(controller);
                 if (resultPromise && typeof resultPromise.then === 'function') {
-                    resultPromise.then(function (result) { return handleResult(res, next, result); });
+                    resultPromise.then((result) => handleResult(res, next, result));
                 }
             });
         });
     }
-    var controllerFileMatcher = /([A-Za-z0-9]+)Controller\.js$/;
-    function setup(app, options) {
-        if (options === void 0) { options = {}; }
-        var controllerDir = options.controllerDir || path.join(process.cwd(), 'controllers');
-        var files = fs.readdirSync(controllerDir);
-        var dependencyManager = options.dependencyManager || dm;
-        var mvcApp = new MvcApp();
+    const controllerFileMatcher = /([A-Za-z0-9]+)Controller(\.js|\.ts)$/;
+    function setup(app, options = {}) {
+        let controllerDir = options.controllerDir || path.join(process.cwd(), 'controllers');
+        let files = fs.readdirSync(controllerDir);
+        let dependencyManager = options.dependencyManager || dm;
+        let mvcApp = new MvcApp();
         mvcApp.rootRouter = options.singleRouterToApp ? express.Router() : app;
-        mvcApp.controllers = files.filter(function (file) { return controllerFileMatcher.test(file); }).map(function (file) {
-            var module = require(path.join(controllerDir, file));
-            var controllerClass = module[file.replace(/.js/, '')];
-            var route = Reflect.getMetadata(exports.MetadataSymbols.ControllerRoutePrefixSymbol, controllerClass);
+        mvcApp.controllers = files.filter(file => controllerFileMatcher.test(file)).map(file => {
+            let module = require(path.join(controllerDir, file));
+            let controllerClass = module[file.replace(/\.js|\.ts/, '')];
+            let route = Reflect.getMetadata(exports.MetadataSymbols.ControllerRoutePrefixSymbol, controllerClass);
             if (route === undefined) {
                 route = getControllerName(controllerClass);
             }
             if (options.debugRoutes) {
-                console.log("  + " + route);
+                console.log(`  + ${route}`);
             }
-            var router = express.Router({ mergeParams: true });
-            var controllerInstance = undefined;
+            let router = express.Router({ mergeParams: true });
+            let controllerInstance = undefined;
             if (options.transientControllers) {
                 setRoutesTransient(controllerClass, router, dependencyManager, options.debugRoutes || false);
             }
@@ -412,8 +403,7 @@ var routing;
     }
     routing.setup = setup;
 })(routing || (routing = {}));
-function setup(app, options) {
-    if (options === void 0) { options = {}; }
+function setup(app, options = {}) {
     return routing.setup(app, options);
 }
 
