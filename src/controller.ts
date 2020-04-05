@@ -27,7 +27,12 @@ export class Controller implements IController {
             viewName = arg1;
             modelData = arg2;
         }
-        return Promise.resolve<ViewResult>({ type: 'view', name: getControllerName((this as Object).constructor) + '/' + viewName, data: modelData });
+        if(!viewName.startsWith('/', 0)) {
+            viewName = getControllerName((this as Object).constructor).toLowerCase() + '/' + viewName
+        } else {
+            viewName = viewName.substr(1);
+        }
+        return Promise.resolve<ViewResult>({ type: 'view', name: viewName, data: modelData });
     }
 
     protected redirect(url: string): Promise<RedirectResult> {

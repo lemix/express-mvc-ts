@@ -214,7 +214,13 @@ class Controller {
             viewName = arg1;
             modelData = arg2;
         }
-        return Promise.resolve({ type: 'view', name: getControllerName(this.constructor) + '/' + viewName, data: modelData });
+        if (!viewName.startsWith('/', 0)) {
+            viewName = getControllerName(this.constructor).toLowerCase() + '/' + viewName;
+        }
+        else {
+            viewName = viewName.substr(1);
+        }
+        return Promise.resolve({ type: 'view', name: viewName, data: modelData });
     }
     redirect(url) {
         return Promise.resolve({ type: 'redirect', url });
