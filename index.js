@@ -256,7 +256,7 @@ function handleResult(res, next, result) {
             res.end(result.data);
             break;
         case 'file':
-            res.end(result.data);
+            res.sendFile(result.data);
             break;
         default:
             res.end();

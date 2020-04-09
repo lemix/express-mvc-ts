@@ -1,6 +1,6 @@
 {
   "name": "express-mvc-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": ".NET MVC-like controller structure for Express.js in Typescript",
   "homepage": "https://github.com/boykathemad/express-mvc-ts",
   "author": {

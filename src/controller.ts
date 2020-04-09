@@ -108,7 +108,7 @@ export function handleResult(res: express.Response, next: (err?: Error) => void,
             res.end(result.data);
             break;
         case 'file':
-            res.end(result.data);
+            res.sendFile(result.data);
             break;
         default:
             res.end();
